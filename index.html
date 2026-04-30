@@ -3,256 +3,849 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뉴스 제보하기 - 조이고 뉴스</title>
+    <title>조이고 뉴스 - JoyGO News</title>
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/3wVmDtDM/daunlodeu.png">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         
-        :root { 
-            --joygo-red: #e53e3e; /* 메인 레드 색상 */
-            --joygo-red-hover: #c53030; 
-            --border: #e1e4e8; 
+        :root {
+            --joygo-red: #e63946;
+            --bg-page: #f4f6f9;
+            --bg-card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #666;
+            --border: #e1e4e8;
+            --header-bg: #ffffff;
+            --shadow: rgba(0,0,0,0.1);
         }
-        
+
+        [data-theme='dark'] {
+            --bg-page: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #aaa;
+            --border: #333;
+            --header-bg: #1a1a1a;
+            --shadow: rgba(0,0,0,0.5);
+        }
+
         body { 
+            margin: 0; padding: 0; 
             font-family: 'Noto Sans KR', sans-serif; 
-            background: #f4f6f9; 
-            margin: 0; 
-            padding: 0; 
+            color: var(--text-main);
+            background-color: var(--bg-page);
+            line-height: 1.5;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        #readingProgress {
+            position: fixed; top: 0; left: 0; width: 0%; height: 4px;
+            background: var(--joygo-red); z-index: 2001; transition: width 0.1s;
+        }
+
+        .top-accent-bar { height: 10px; background-color: var(--joygo-red); width: 100%; }
+
+        header {
+            padding: 15px 10%;
+            border-bottom: 1px solid var(--border);
+            background: var(--header-bg);
+            position: sticky; top: 0; z-index: 1000;
+        }
+
+        .header-main { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+        .logo-section { display: flex; align-items: center; gap: 15px; flex: 1; overflow: hidden; }
+        .logo img { height: 45px; cursor: pointer; flex-shrink: 0; }
+
+        .breaking-news {
+            display: flex; align-items: center; 
+            background: var(--bg-page); padding: 5px 10px; border-radius: 20px;
+            max-width: 350px; white-space: nowrap; overflow: hidden;
+            position: relative;
+        }
+        .breaking-badge { 
+            color: var(--joygo-red); font-weight: 900; font-size: 13px; 
+            padding-right: 10px; background: var(--bg-page); 
+            z-index: 2; position: relative;
+        }
+        .breaking-text-container { overflow: hidden; flex: 1; display: flex; z-index: 1; }
+        .breaking-text { 
+            font-size: 13px; font-weight: 500; display: inline-block;
+            animation: marquee 15s linear infinite; padding-left: 100%;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-200%); }
+        }
+
+        .header-tools { display: flex; align-items: center; gap: 15px; }
+        
+        .info-panel { 
             display: flex; 
-            justify-content: center; 
             align-items: center; 
-            min-height: 100vh; 
+            gap: 15px; 
+            font-size: 12px; 
+            color: var(--text-muted); 
+            background: var(--bg-page);
+            padding: 5px 15px;
+            border-radius: 10px;
+        }
+        .time-display { font-weight: 900; color: var(--joygo-red); min-width: 70px; }
+        .date-display { font-weight: 500; }
+        .weather-display { display: flex; align-items: center; gap: 3px; font-weight: bold; }
+        .weather-icon { width: 22px; height: 22px; }
+
+        .search-container { position: relative; }
+        .search-box { position: relative; display: flex; align-items: center; }
+        .search-input { 
+            padding: 8px 15px; border-radius: 20px; border: 1px solid var(--border); 
+            background: var(--bg-page); color: var(--text-main); outline: none; width: 120px; transition: width 0.3s;
+            font-size: 13px;
+        }
+        .search-input:focus { width: 200px; border-color: var(--joygo-red); }
+
+        .autocomplete-list {
+            position: absolute; top: 110%; left: 0; width: 220px; 
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; box-shadow: 0 10px 25px var(--shadow);
+            z-index: 1001; display: none; max-height: 450px; overflow-y: auto;
+            padding: 5px 0;
+        }
+        .autocomplete-header {
+            padding: 10px 15px; font-size: 11px; font-weight: bold; color: var(--joygo-red);
+            border-bottom: 1px solid var(--border); background: var(--bg-page);
+        }
+        .autocomplete-item {
+            padding: 10px 15px; font-size: 13px; cursor: pointer;
+            border-bottom: 1px solid var(--border); transition: 0.2s;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .autocomplete-item:hover { background: var(--bg-page); color: var(--joygo-red); }
+        .item-rank { font-weight: bold; margin-right: 8px; color: var(--joygo-red); min-width: 15px; }
+        .item-meta { font-size: 10px; color: var(--text-muted); }
+
+        .theme-toggle {
+            background: none; border: 1px solid var(--border); color: var(--text-main);
+            padding: 5px 10px; border-radius: 15px; cursor: pointer; font-size: 11px;
         }
 
-        .report-card { 
-            background: white; 
-            width: 90%; 
-            max-width: 500px; 
-            padding: 40px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+        nav ul { display: flex; gap: 25px; list-style: none; padding: 15px 0 0 0; margin: 0; }
+        nav ul li a { font-size: 16px; font-weight: 700; cursor: pointer; color: var(--text-main); text-decoration: none; }
+        nav ul li a.active { color: var(--joygo-red); }
+
+        main { padding: 30px 10%; max-width: 1200px; margin: 0 auto; min-height: 80vh; }
+
+        .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        .news-item {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; 
+            overflow: hidden; transition: 0.2s; cursor: pointer; display: flex; flex-direction: column;
+        }
+        .news-item:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .video-wrapper { position: relative; padding-bottom: 56.25%; background: #000; pointer-events: none; }
+        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .news-info { padding: 15px; flex: 1; }
+        .news-info h3 { margin: 0 0 8px 0; font-size: 16px; color: var(--text-main); }
+        .read-time-badge { font-size: 11px; color: var(--joygo-red); font-weight: bold; margin-bottom: 8px; display: block; }
+        .news-info p { font-size: 13px; color: var(--text-muted); -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+
+        #detailView, #vodView { display: none; }
+        .detail-video { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; margin: 20px 0; }
+        .detail-content { font-size: 17px; line-height: 1.8; white-space: pre-wrap; margin-bottom: 40px; }
+        .detail-read-info { background: var(--bg-page); padding: 10px 15px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; border-left: 4px solid var(--joygo-red); }
+        
+        .share-section { display: flex; gap: 10px; margin: 20px 0; padding: 15px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); }
+        .share-btn { border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .share-copy { background: #eee; color: #333; }
+        .share-tw { background: #1da1f2; color: white; }
+
+        .comment-section { margin-top: 50px; border-top: 2px solid var(--border); padding-top: 30px; }
+        .comment-input-box { margin-bottom: 30px; }
+        .comment-input { width: 100%; background: var(--bg-page); border: 1px solid var(--border); color: var(--text-main); padding: 15px; border-radius: 10px; box-sizing: border-box; resize: none; }
+        
+        .comment-card { border-bottom: 1px solid var(--border); padding: 20px 0; position: relative; }
+        .comment-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .comment-user-img { width: 30px; height: 30px; border-radius: 50%; }
+        .comment-name { font-weight: 700; font-size: 14px; }
+        .comment-date { font-size: 11px; color: var(--text-muted); }
+        .comment-actions { display: flex; gap: 15px; margin-top: 10px; font-size: 12px; }
+        .action-link { cursor: pointer; color: var(--text-muted); transition: 0.2s; }
+        .action-link:hover { color: var(--joygo-red); }
+        .action-link.red:hover { color: #ff4d4d; }
+
+        .reply-container { margin-left: 40px; margin-top: 10px; border-left: 2px solid var(--border); padding-left: 15px; }
+        .reply-input-box { margin-top: 10px; display: none; }
+
+        /* VOD 전용 스타일 */
+        .vod-container {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--bg-card);
+            border-radius: 15px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px var(--shadow);
+            margin-top: 20px;
+        }
+        .vod-lock-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .vod-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--text-main);
+            margin-bottom: 15px;
+        }
+        .vod-desc {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+        .subscribe-btn {
+            background: var(--joygo-red);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .subscribe-btn:hover {
+            transform: scale(1.05);
+            background: #c92a35;
         }
 
-        .logo { 
-            text-align: center; 
-            margin-bottom: 30px; 
-            cursor: pointer; 
+        #nicknameModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999;
         }
-        
-        .logo img { 
-            height: 50px; /* 로고 크기에 맞게 약간 조정 */
-            object-fit: contain;
+        .modal-content {
+            background: var(--bg-card); padding: 30px; border-radius: 15px; width: 350px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
-        
-        h2 { 
-            text-align: center; 
-            font-weight: 900; 
-            margin-bottom: 30px; 
-            color: #333; 
+        .modal-content h2 { margin-top: 0; font-size: 20px; }
+        .modal-input {
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);
+            margin: 15px 0; box-sizing: border-box; font-size: 16px; background: var(--bg-page); color: var(--text-main);
         }
-        
-        .input-group { 
-            margin-bottom: 20px; 
-        }
-        
-        .input-group label { 
-            display: block; 
-            font-size: 14px; 
-            font-weight: 700; 
-            margin-bottom: 8px; 
-            color: #555; 
-        }
-        
-        .input-group input, .input-group textarea {
-            width: 100%; 
-            padding: 15px; 
-            border: 1px solid #ddd; 
-            border-radius: 10px; 
-            font-family: inherit; 
-            box-sizing: border-box; 
-            outline: none; 
-            transition: border 0.2s, box-shadow 0.2s;
-        }
-        
-        .input-group input:focus, .input-group textarea:focus { 
-            border-color: var(--joygo-red); 
-            box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
-        }
-        
-        .submit-btn { 
-            width: 100%; 
-            background: var(--joygo-red); 
-            color: white; 
-            border: none; 
-            padding: 18px; 
-            border-radius: 10px; 
-            font-weight: 800; 
-            font-size: 16px; 
-            cursor: pointer; 
-            transition: background 0.2s; 
-        }
-        
-        .submit-btn:hover { 
-            background: var(--joygo-red-hover); 
-        }
-        
-        .submit-btn:disabled { 
-            background: #ccc; 
-            cursor: not-allowed; 
-        }
-        
-        .back-link { 
-            text-align: center; 
-            margin-top: 20px; 
-            font-size: 14px; 
-            color: #888; 
-            cursor: pointer; 
-            transition: color 0.2s;
+        .modal-btn {
+            background: var(--joygo-red); color: white; border: none; padding: 12px 20px;
+            border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer;
         }
 
-        .back-link:hover {
-            color: var(--joygo-red);
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 25px; border-radius: 25px; z-index: 3000; display: none; }
+
+        @media (max-width: 1100px) {
+            .info-panel { display: none; }
         }
-        
-        /* 로딩 마스크 */
-        #loading { 
-            position: fixed; 
-            top:0; 
-            left:0; 
-            width:100%; 
-            height:100%; 
-            background:white; 
-            display:flex; 
-            flex-direction:column; 
-            justify-content:center; 
-            align-items:center; 
-            z-index: 9999; 
+        @media (max-width: 900px) {
+            .header-main { flex-wrap: wrap; }
+            .breaking-news { order: 3; max-width: 100%; width: 100%; margin-top: 10px; }
         }
     </style>
 </head>
-<body>
+<body data-theme="light">
 
-    <div id="loading">
-        <p>사용자 정보를 확인 중입니다...</p>
+    <div id="readingProgress"></div>
+    <div class="top-accent-bar"></div>
+
+    <div id="nicknameModal">
+        <div class="modal-content">
+            <h2>반갑습니다! 👋</h2>
+            <p style="font-size: 14px; color: var(--text-muted);">사용하실 닉네임을 설정해주세요.</p>
+            <input type="text" id="nicknameInput" class="modal-input" placeholder="닉네임 (최대 10자)" maxlength="10">
+            <button id="saveNicknameBtn" class="modal-btn">시작하기</button>
+        </div>
     </div>
 
-    <div class="report-card">
-        <!-- 로고 이미지 변경됨 -->
-        <div class="logo" onclick="location.href='index.html'">
-            <img src="https://opencard.uk/6fbe4b4a-c71d-49d3-94a6-c61399af811e.png" alt="조이고 뉴스 로고">
+    <header>
+        <div class="header-main">
+            <div class="logo-section">
+                <div class="logo" onclick="location.hash = '#'">
+                    <img src="https://opencard.uk/6fbe4b4a-c71d-49d3-94a6-c61399af811e.png" alt="JoyGO Logo">
+                </div>
+                <div class="breaking-news">
+                    <span class="breaking-badge">[속보]</span>
+                    <div class="breaking-text-container">
+                        <span class="breaking-text" id="breakingTicker">조이고 뉴스에 오신 것을 환영합니다!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-tools">
+                <div class="info-panel">
+                    <div id="realTimeClock" class="time-display">00:00:00</div>
+                    <div id="realTimeDate" class="date-display">0000. 0. 0.</div>
+                    <div id="weatherDisplay" class="weather-display">로딩 중..</div>
+                </div>
+                <div class="search-container" id="searchContainer">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" class="search-input" placeholder="뉴스 검색..." autocomplete="off">
+                    </div>
+                    <div id="autocompleteList" class="autocomplete-list"></div>
+                </div>
+                <button class="theme-toggle" id="themeToggle">🌙 다크모드</button>
+                <div id="authContainer"></div>
+            </div>
         </div>
-        <h2>뉴스 제보하기</h2>
-        
-        <div class="input-group">
-            <label>뉴스 제목</label>
-            <input type="text" id="newsTitle" placeholder="시선을 사로잡는 제목">
-        </div>
-        <div class="input-group">
-            <label>유튜브 영상 링크</label>
-            <input type="text" id="newsYoutube" placeholder="https://www.youtube.com/watch?v=...">
-        </div>
-        <div class="input-group">
-            <label>제보 내용</label>
-            <textarea id="newsContent" rows="5" placeholder="상세한 내용을 적어주세요"></textarea>
-        </div>
-        
-        <!-- 버튼 색상 레드 계열로 변경됨 -->
-        <button class="submit-btn" id="submitBtn">제보 완료하기</button>
-        <div class="back-link" onclick="location.href='index.html'">돌아가기</div>
-    </div>
+        <nav>
+            <ul id="mainNav">
+                <li><a onclick="location.hash = '#'" id="navHome">홈</a></li>
+                <li><a href="https://www.joygonews.uk/jebo" target="_blank">제보</a></li>
+                <li><a href="https://www.joygonews.uk/weather" target="_blank">날씨</a></li>
+                <li><a href="https://padlet.com/koreacomsearch/padlet-2ik5nqjo7y4q1qoh" target="_blank">게시판</a></li>
+                <li><a href="https://map.joygonews.uk/" target="_blank">지도</a></li>
+                <!-- 실시간 VOD 메뉴 추가 -->
+                <li><a onclick="location.hash = '#/vod'" id="navVod">실시간 VOD 보기</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- 뉴스 목록 뷰 -->
+        <section id="listView">
+            <div id="searchResultTitle" style="display:none; margin-bottom:20px;">
+                <h2 id="searchText"></h2>
+                <button onclick="location.hash='#'" style="border:none; background:none; color:var(--joygo-red); cursor:pointer; font-weight:bold;">전체보기로 돌아가기</button>
+            </div>
+            <div class="news-grid" id="newsGrid"></div>
+        </section>
+
+        <!-- 뉴스 상세 뷰 -->
+        <section id="detailView">
+            <button onclick="location.hash='#'" style="cursor:pointer; background:none; border:1px solid var(--border); color:var(--text-main); padding:5px 10px; border-radius:5px;">← 뒤로가기</button>
+            <div id="detailArea"></div>
+            
+            <div class="share-section">
+                <span style="font-weight:bold; font-size:14px; margin-right:10px; align-self:center;">공유하기:</span>
+                <button class="share-btn share-copy" onclick="window.copyLink()">🔗 링크 복사</button>
+                <button class="share-btn share-tw" onclick="window.shareTwitter()">𝕏 트위터</button>
+            </div>
+
+            <div class="comment-section">
+                <h3>댓글 <span id="commentCount">0</span></h3>
+                <div class="comment-input-box">
+                    <textarea id="commentInput" class="comment-input" placeholder="로그인 후 의견을 남겨주세요." rows="3"></textarea>
+                    <button onclick="window.submitComment()" style="float:right; margin-top:10px; padding:10px 20px; background:var(--joygo-red); color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">댓글 등록</button>
+                </div>
+                <div id="commentList" style="clear:both; margin-top:50px;"></div>
+            </div>
+        </section>
+
+        <!-- VOD 보기 뷰 (새로 추가) -->
+        <section id="vodView">
+            <div class="vod-container">
+                <span class="vod-lock-icon">🔒</span>
+                <h2 class="vod-title">VOD는 프리미엄 사용자만 가능합니다.</h2>
+                <p class="vod-desc">고화질 실시간 VOD를 무제한으로 즐기려면 구독이 필요합니다.</p>
+                <a href="https://www.payapp.kr/L/z4cVQ2" target="_blank" class="subscribe-btn">구독하기</a>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, query, orderBy, serverTimestamp, onSnapshot, updateDoc, deleteDoc, increment } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-        // Firebase 설정 (기존 설정 유지)
         const firebaseConfig = {
             apiKey: "AIzaSyDOu8jfgNproVHenknRdsG-HPScyFMdO0k",
             authDomain: "joygonews318.firebaseapp.com",
             projectId: "joygonews318",
             storageBucket: "joygonews318.firebasestorage.app",
             messagingSenderId: "18066193272",
-            appId: "1:18066193272:web:8a5e0e8e8a82d3e870e68d",
-            measurementId: "G-YGPH1T655Y"
+            appId: "1:18066193272:web:8a5e0e8e8a82d3e870e68d"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-        let currentUserNickname = "";
+        let allNews = [];
+        let currentNewsId = null;
+        let userNickname = "";
+        let unsubscribeComments = null;
 
-        // 1. 보안 체크 및 닉네임 가져오기
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                // 실 서비스에서는 alert 대신 커스텀 모달 권장
-                console.log("로그인이 필요합니다.");
-                location.href = "index.html"; 
+        async function checkUserProfile(user) {
+            if (!user) return;
+            const userDocRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userDocRef);
+
+            if (userSnap.exists()) {
+                userNickname = userSnap.data().nickname;
+                updateAuthUI(user);
             } else {
-                try {
-                    const userDocRef = doc(db, "users", user.uid);
-                    const userSnap = await getDoc(userDocRef);
+                const modal = document.getElementById('nicknameModal');
+                const nickInput = document.getElementById('nicknameInput');
+                const saveBtn = document.getElementById('saveNicknameBtn');
+                
+                modal.style.display = 'flex';
+                nickInput.value = user.displayName;
+
+                saveBtn.onclick = async () => {
+                    const nick = nickInput.value.trim();
+                    if (!nick) return alert("닉네임을 입력해주세요.");
                     
-                    if (userSnap.exists()) {
-                        currentUserNickname = userSnap.data().nickname;
-                    } else {
-                        currentUserNickname = user.displayName || "익명 제보자";
+                    try {
+                        await setDoc(userDocRef, {
+                            uid: user.uid,
+                            nickname: nick,
+                            photoURL: user.photoURL,
+                            email: user.email,
+                            createdAt: serverTimestamp()
+                        });
+                        userNickname = nick;
+                        modal.style.display = 'none';
+                        updateAuthUI(user);
+                        window.showToast("닉네임 설정 완료!");
+                    } catch (e) {
+                        console.error(e);
+                        alert("설정 중 오류가 발생했습니다.");
                     }
-                    
-                    document.getElementById('loading').style.display = 'none'; 
-                } catch (e) {
-                    console.error("사용자 정보 로드 실패:", e);
-                    currentUserNickname = user.displayName || "익명 제보자";
-                    document.getElementById('loading').style.display = 'none';
-                }
+                };
+            }
+        }
+
+        function updateAuthUI(user) {
+            const container = document.getElementById('authContainer');
+            if (user) {
+                container.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:12px; font-weight:bold; color:var(--joygo-red)">${userNickname}님</span>
+                        <img src="${user.photoURL}" style="width:30px; border-radius:50%; cursor:pointer" title="로그아웃" onclick="window.handleSignOut()">
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `<button onclick="window.login()" style="padding:5px 12px; background:var(--joygo-red); color:white; border:none; border-radius:20px; cursor:pointer; font-size:12px; font-weight:bold;">로그인</button>`;
+            }
+        }
+
+        window.handleSignOut = () => {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                signOut(auth);
+                userNickname = "";
+            }
+        };
+
+        function calculateReadTime(text) {
+            if (!text) return 1;
+            const wordsPerMinute = 500;
+            const minutes = Math.ceil(text.length / wordsPerMinute);
+            return minutes;
+        }
+
+        window.login = () => signInWithPopup(auth, provider);
+        window.showToast = (m) => {
+            const t = document.getElementById('toast');
+            t.innerText = m; t.style.display='block';
+            setTimeout(()=>t.style.display='none', 2000);
+        };
+
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.onclick = () => {
+            const current = document.body.getAttribute('data-theme');
+            const target = current === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', target);
+            themeToggle.innerText = target === 'light' ? '🌙 다크모드' : '☀️ 라이트모드';
+            localStorage.setItem('theme', target);
+        };
+        if(localStorage.getItem('theme') === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            themeToggle.innerText = '☀️ 라이트모드';
+        }
+
+        window.loadNewsData = async (filterKeyword = "") => {
+            const grid = document.getElementById('newsGrid');
+            grid.innerHTML = '<p>뉴스를 불러오는 중입니다...</p>';
+            try {
+                const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+                const snap = await getDocs(q);
+                allNews = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                if(allNews.length > 0) document.getElementById('breakingTicker').innerText = allNews[0].title;
+                renderNewsList(filterKeyword);
+            } catch(e) { console.error(e); }
+        };
+
+        function renderNewsList(keyword = "") {
+            const grid = document.getElementById('newsGrid');
+            const resultTitle = document.getElementById('searchResultTitle');
+            grid.innerHTML = '';
+            let filtered = allNews;
+            if(keyword) {
+                filtered = allNews.filter(n => n.title.toLowerCase().includes(keyword.toLowerCase()) || (n.content && n.content.toLowerCase().includes(keyword.toLowerCase())));
+                resultTitle.style.display = 'block';
+                document.getElementById('searchText').innerText = `'${keyword}' 검색 결과 (${filtered.length})`;
+            } else {
+                resultTitle.style.display = 'none';
+            }
+            filtered.forEach(news => {
+                const readTime = calculateReadTime(news.content || "");
+                const card = document.createElement('div');
+                card.className = 'news-item';
+                card.onclick = () => location.hash = `#/news/${news.id}`;
+                card.innerHTML = `
+                    <div class="video-wrapper"><iframe src="https://www.youtube.com/embed/${news.youtubeId}?controls=0"></iframe></div>
+                    <div class="news-info">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="read-time-badge">⏱️ 약 ${readTime}분 분량</span>
+                            <span style="font-size:11px; color:var(--text-muted);">조회수 ${news.views || 0}회</span>
+                        </div>
+                        <h3>${news.title}</h3>
+                        <p>${news.content || ''}</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        window.showDetail = async (id) => {
+            currentNewsId = id;
+            document.getElementById('listView').style.display = 'none';
+            document.getElementById('vodView').style.display = 'none';
+            document.getElementById('detailView').style.display = 'block';
+            window.scrollTo(0,0);
+            const area = document.getElementById('detailArea');
+            area.innerHTML = '상세 내용을 불러오는 중...';
+            
+            const newsRef = doc(db, "news", id);
+            
+            if (!sessionStorage.getItem(`viewed_${id}`)) {
+                try {
+                    await updateDoc(newsRef, { views: increment(1) });
+                    sessionStorage.setItem(`viewed_${id}`, 'true');
+                } catch(e) { console.error("Update views error:", e); }
+            }
+
+            const snap = await getDoc(newsRef);
+            if(snap.exists()) {
+                const data = snap.data();
+                const readTime = calculateReadTime(data.content || "");
+                const viewCount = data.views || 0;
+                area.innerHTML = `
+                    <h1 style="font-size:28px; margin-top:20px; line-height:1.4;">${data.title}</h1>
+                    <p style="color:var(--text-muted); font-size:13px;">Author: ${data.author || 'Anonymous'} | ${data.createdAt ? new Date(data.createdAt.seconds*1000).toLocaleString() : ''} | Views ${viewCount}</p>
+                    <div class="detail-read-info">
+                        ✨ <b>이 기사는 읽는 데 약 ${readTime}분 정도 소요됩니다.</b> 편안하게 감상해 보세요!
+                    </div>
+                    <div class="detail-video">
+                        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${data.youtubeId}" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="detail-content">${data.content}</div>
+                `;
+                initComments(id);
+            }
+        };
+
+        const searchInput = document.getElementById('searchInput');
+        const autocompleteList = document.getElementById('autocompleteList');
+
+        function renderPopularList() {
+            autocompleteList.innerHTML = '<div class="autocomplete-header">🔥 인기 뉴스 TOP 10</div>';
+            const popularNews = [...allNews].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
+            
+            popularNews.forEach((m, index) => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.innerHTML = `
+                    <span style="overflow:hidden; text-overflow:ellipsis;">
+                        <span class="item-rank">${index + 1}</span>${m.title}
+                    </span>
+                    <span class="item-meta">${m.views || 0}회</span>
+                `;
+                item.onclick = () => {
+                    searchInput.value = m.title;
+                    autocompleteList.style.display = 'none';
+                    location.hash = `#/news/${m.id}`;
+                };
+                autocompleteList.appendChild(item);
+            });
+            autocompleteList.style.display = 'block';
+        }
+
+        searchInput.addEventListener('focus', () => {
+            if (!searchInput.value.trim()) {
+                renderPopularList();
             }
         });
 
-        // 2. 유튜브 ID 추출 함수
-        function getYoutubeID(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
-        }
-
-        // 3. 제보 버튼 클릭 이벤트
-        document.getElementById('submitBtn').onclick = async () => {
-            const title = document.getElementById('newsTitle').value.trim();
-            const url = document.getElementById('newsYoutube').value.trim();
-            const content = document.getElementById('newsContent').value.trim();
-            const videoId = getYoutubeID(url);
-            const btn = document.getElementById('submitBtn');
-
-            if (!title || !videoId || !content) {
-                // 입력값 검증 실패 시 시각적 피드백이나 메시지 표시
-                alert("모든 빈칸을 채워주세요! 유튜브 링크가 올바른지도 확인해 주세요.");
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim().toLowerCase();
+            autocompleteList.innerHTML = '';
+            if (!val) {
+                renderPopularList();
                 return;
             }
-
-            btn.disabled = true;
-            btn.innerText = "업로드 중...";
-
-            try {
-                await addDoc(collection(db, "news"), {
-                    title: title,
-                    youtubeId: videoId,
-                    content: content,
-                    author: currentUserNickname,
-                    authorUid: auth.currentUser.uid,
-                    views: 0,
-                    createdAt: serverTimestamp()
+            const matches = allNews.filter(n => n.title.toLowerCase().includes(val)).slice(0, 8);
+            if (matches.length > 0) {
+                autocompleteList.innerHTML = '<div class="autocomplete-header">🔍 검색 결과</div>';
+                matches.forEach(m => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.innerText = m.title;
+                    item.onclick = () => {
+                        searchInput.value = m.title;
+                        autocompleteList.style.display = 'none';
+                        location.hash = `#/news/${m.id}`;
+                    };
+                    autocompleteList.appendChild(item);
                 });
-                
-                alert("제보가 성공적으로 완료되었습니다!");
-                location.href = "index.html"; 
-            } catch (e) {
-                console.error("제보 오류:", e);
-                alert("제보 중 오류가 발생했습니다. 다시 시도해 주세요.");
-                btn.disabled = false;
-                btn.innerText = "제보 완료하기";
+                autocompleteList.style.display = 'block';
+            } else {
+                autocompleteList.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('searchContainer').contains(e.target)) {
+                autocompleteList.style.display = 'none';
+            }
+        });
+
+        searchInput.onkeypress = (e) => {
+            if(e.key === 'Enter') {
+                const keyword = searchInput.value.trim();
+                if(keyword) {
+                    autocompleteList.style.display = 'none';
+                    location.hash = `#/search/${encodeURIComponent(keyword)}`;
+                }
             }
         };
+
+        async function initComments(newsId) {
+            if(unsubscribeComments) unsubscribeComments();
+            const list = document.getElementById('commentList');
+            const q = query(collection(db, "news", newsId, "comments"), orderBy("createdAt", "asc"));
+            unsubscribeComments = onSnapshot(q, (snap) => {
+                document.getElementById('commentCount').innerText = snap.size;
+                list.innerHTML = '';
+                snap.docs.forEach(d => {
+                    const c = d.data();
+                    const isMyComment = auth.currentUser?.uid === c.uid;
+                    const card = document.createElement('div');
+                    card.className = 'comment-card';
+                    card.innerHTML = `
+                        <div class="comment-header">
+                            <img src="${c.userImg || 'https://via.placeholder.com/30'}" class="comment-user-img">
+                            <div>
+                                <span class="comment-name">${c.userName}</span>
+                                <span class="comment-date">${c.createdAt ? new Date(c.createdAt.seconds*1000).toLocaleString() : '방금 전'}</span>
+                            </div>
+                        </div>
+                        <div id="text-${d.id}">${c.text}</div>
+                        <div class="comment-actions">
+                            <span class="action-link" onclick="window.toggleReply('${d.id}')">답글</span>
+                            ${isMyComment ? `<span class="action-link" onclick="window.editComment('${d.id}', '${c.text.replace(/'/g, "\\'")}')">수정</span>` : ''}
+                            ${isMyComment ? `<span class="action-link red" onclick="window.deleteComment('${d.id}')">삭제</span>` : ''}
+                            <span class="action-link red" onclick="window.reportComment('${d.id}')">신고</span>
+                        </div>
+                        <div id="reply-box-${d.id}" class="reply-input-box">
+                            <textarea id="reply-input-${d.id}" class="comment-input" placeholder="답글을 남겨주세요." rows="2"></textarea>
+                            <button onclick="window.submitReply('${d.id}')" style="margin-top:5px; padding:5px 15px; background:var(--joygo-red); color:white; border:none; border-radius:5px; cursor:pointer;">답글 등록</button>
+                        </div>
+                        <div id="replies-${d.id}" class="reply-container"></div>
+                    `;
+                    list.appendChild(card);
+                    loadReplies(newsId, d.id);
+                });
+            }, (error) => {
+                console.error("Comment snapshot error:", error);
+            });
+        }
+
+        async function loadReplies(newsId, commentId) {
+            const replyList = document.getElementById(`replies-${commentId}`);
+            const q = query(collection(db, "news", newsId, "comments", commentId, "replies"), orderBy("createdAt", "asc"));
+            onSnapshot(q, (snap) => {
+                if(!replyList) return;
+                replyList.innerHTML = snap.docs.map(rd => {
+                    const r = rd.data();
+                    return `
+                        <div style="font-size:13px; margin-bottom:10px; padding:5px 0; border-bottom: 1px dashed var(--border);">
+                            <strong>${r.userName}</strong>: ${r.text} 
+                            <small style="color:gray; margin-left:5px">${r.createdAt ? new Date(r.createdAt.seconds*1000).toLocaleTimeString() : '방금 전'}</small>
+                        </div>
+                    `;
+                }).join('');
+            }, (error) => {
+                console.error("Reply snapshot error:", error);
+            });
+        }
+
+        window.submitComment = async () => {
+            if(!auth.currentUser) return window.showToast("로그인이 필요합니다.");
+            if(!userNickname) return window.showToast("닉네임 설정이 필요합니다.");
+            
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+            if(!text) return;
+            try {
+                await addDoc(collection(db, "news", currentNewsId, "comments"), {
+                    text: text, 
+                    uid: auth.currentUser.uid, 
+                    userName: userNickname,
+                    userImg: auth.currentUser.photoURL,
+                    createdAt: serverTimestamp()
+                });
+                input.value = '';
+                window.showToast("댓글이 등록되었습니다.");
+            } catch(e) { window.showToast("등록 실패"); }
+        };
+
+        window.submitReply = async (commentId) => {
+            if(!auth.currentUser) return window.showToast("로그인이 필요합니다.");
+            const input = document.getElementById(`reply-input-${commentId}`);
+            const text = input.value.trim();
+            if(!text) return;
+            try {
+                await addDoc(collection(db, "news", currentNewsId, "comments", commentId, "replies"), {
+                    text: text, 
+                    uid: auth.currentUser.uid, 
+                    userName: userNickname,
+                    createdAt: serverTimestamp()
+                });
+                input.value = '';
+                window.toggleReply(commentId);
+                window.showToast("답글이 등록되었습니다.");
+            } catch(e) { window.showToast("답글 등록 실패"); }
+        };
+
+        window.deleteComment = async (id) => {
+            if(confirm("댓글을 삭제하시겠습니까?")) {
+                await deleteDoc(doc(db, "news", currentNewsId, "comments", id));
+                window.showToast("삭제되었습니다.");
+            }
+        };
+
+        window.editComment = async (id, oldText) => {
+            const newText = prompt("수정할 내용을 입력하세요:", oldText);
+            if(newText && newText !== oldText) {
+                await updateDoc(doc(db, "news", currentNewsId, "comments", id), { text: newText });
+                window.showToast("수정되었습니다.");
+            }
+        };
+
+        window.toggleReply = (id) => {
+            const box = document.getElementById(`reply-box-${id}`);
+            if(box) box.style.display = box.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.reportComment = async (id) => {
+            if(confirm("이 댓글을 신고하시겠습니까?")) {
+                try {
+                    await addDoc(collection(db, "reports"), {
+                        commentId: id,
+                        reporterUid: auth.currentUser?.uid || 'anonymous',
+                        reason: "부적절한 콘텐츠",
+                        createdAt: serverTimestamp()
+                    });
+                    alert("신고가 접수되었습니다. 검토 후 처리하겠습니다.");
+                } catch(e) { window.showToast("신고 접수 실패"); }
+            }
+        };
+
+        window.copyLink = () => {
+            const url = window.location.href;
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = url; dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            window.showToast("링크가 복사되었습니다!");
+        };
+
+        window.shareTwitter = () => {
+            const text = "조이고 뉴스에서 이 소식을 확인해보세요!";
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`);
+        };
+
+        function handleRoute() {
+            const hash = window.location.hash;
+            const listView = document.getElementById('listView');
+            const detailView = document.getElementById('detailView');
+            const vodView = document.getElementById('vodView');
+            const navHome = document.getElementById('navHome');
+            const navVod = document.getElementById('navVod');
+
+            // 메뉴 활성화 초기화
+            navHome.classList.remove('active');
+            navVod.classList.remove('active');
+
+            if(hash.startsWith('#/news/')) {
+                listView.style.display = 'none';
+                vodView.style.display = 'none';
+                detailView.style.display = 'block';
+                window.showDetail(hash.replace('#/news/', ''));
+            } else if(hash.startsWith('#/search/')) {
+                listView.style.display = 'block';
+                detailView.style.display = 'none';
+                vodView.style.display = 'none';
+                window.loadNewsData(decodeURIComponent(hash.replace('#/search/', '')));
+            } else if(hash === '#/vod') {
+                listView.style.display = 'none';
+                detailView.style.display = 'none';
+                vodView.style.display = 'block';
+                navVod.classList.add('active');
+                window.scrollTo(0,0);
+            } else {
+                listView.style.display = 'block';
+                detailView.style.display = 'none';
+                vodView.style.display = 'none';
+                navHome.classList.add('active');
+                window.loadNewsData();
+            }
+        }
+        window.addEventListener('hashchange', handleRoute);
+        window.addEventListener('load', handleRoute);
+
+        onAuthStateChanged(auth, (user) => {
+            if(user) {
+                checkUserProfile(user);
+            } else {
+                updateAuthUI(null);
+            }
+        });
+    </script>
+
+    <script>
+        function updateClock() {
+            const clockEl = document.getElementById('realTimeClock');
+            const dateEl = document.getElementById('realTimeDate');
+            if (!clockEl || !dateEl) return;
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            clockEl.innerText = `${h}:${m}:${s}`;
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            dateEl.innerText = `${now.getFullYear()}. ${now.getMonth() + 1}. ${now.getDate()}. (${days[now.getDay()]})`;
+        }
+
+        async function getWeather() {
+            const API_KEY = 'f9588dfba7000b48e2a636ba0ded59c5';
+            const weatherEl = document.getElementById('weatherDisplay');
+            try {
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=Seoul&appid=${API_KEY}&units=metric&lang=kr`);
+                const data = await res.json();
+                weatherEl.innerHTML = `<img src="https://openweathermap.org/img/wn/${data.weather[0].icon}.png" class="weather-icon"> <span>${Math.round(data.main.temp)}°C 서울</span>`;
+            } catch (e) { 
+                if(weatherEl) weatherEl.innerText = "날씨 정보 없음"; 
+            }
+        }
+
+        window.addEventListener('load', () => {
+            updateClock();
+            getWeather();
+            setInterval(updateClock, 1000);
+            setInterval(getWeather, 1800000);
+        });
     </script>
 </body>
 </html>
