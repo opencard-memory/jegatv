@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>조이고 뉴스 - JoyGO News</title>
-    <link rel="icon" type="image/png" href="https://i.postimg.cc/3wVmDtDM/daunlodeu.png">
+    <title>JEGA TV - JoyGo News</title>
+    <link rel="icon" type="image/png" href="https://opencard.uk/6fbe4b4a-c71d-49d3-94a6-c61399af811e.png">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         
@@ -131,9 +131,23 @@
             padding: 5px 10px; border-radius: 15px; cursor: pointer; font-size: 11px;
         }
 
-        nav ul { display: flex; gap: 25px; list-style: none; padding: 15px 0 0 0; margin: 0; }
-        nav ul li a { font-size: 16px; font-weight: 700; cursor: pointer; color: var(--text-main); text-decoration: none; }
+        nav ul { display: flex; gap: 20px; list-style: none; padding: 15px 0 0 0; margin: 0; align-items: center; flex-wrap: wrap; }
+        nav ul li a { font-size: 16px; font-weight: 700; cursor: pointer; color: var(--text-main); text-decoration: none; transition: color 0.2s; }
         nav ul li a.active { color: var(--joygo-red); }
+        nav ul li a:hover { color: var(--joygo-red); }
+
+        /* 조이고뉴스로 이동 버튼 특수 스타일 */
+        .btn-external {
+            background: var(--joygo-red);
+            color: white !important;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 14px !important;
+        }
+        .btn-external:hover {
+            background: #c92a35;
+            transform: scale(1.05);
+        }
 
         main { padding: 30px 10%; max-width: 1200px; margin: 0 auto; min-height: 80vh; }
 
@@ -300,14 +314,14 @@
                 <li><a href="https://www.joygonews.uk/weather" target="_blank">날씨</a></li>
                 <li><a href="https://padlet.com/koreacomsearch/padlet-2ik5nqjo7y4q1qoh" target="_blank">게시판</a></li>
                 <li><a href="https://map.joygonews.uk/" target="_blank">지도</a></li>
-                <!-- 실시간 VOD 메뉴 추가 -->
                 <li><a onclick="location.hash = '#/vod'" id="navVod">실시간 VOD 보기</a></li>
+                <!-- 추가된 조이고뉴스로 이동 버튼 -->
+                <li><a href="https://www.joygonews.uk" target="_blank" class="btn-external">조이고뉴스로 이동</a></li>
             </ul>
         </nav>
     </header>
 
     <main>
-        <!-- 뉴스 목록 뷰 -->
         <section id="listView">
             <div id="searchResultTitle" style="display:none; margin-bottom:20px;">
                 <h2 id="searchText"></h2>
@@ -316,7 +330,6 @@
             <div class="news-grid" id="newsGrid"></div>
         </section>
 
-        <!-- 뉴스 상세 뷰 -->
         <section id="detailView">
             <button onclick="location.hash='#'" style="cursor:pointer; background:none; border:1px solid var(--border); color:var(--text-main); padding:5px 10px; border-radius:5px;">← 뒤로가기</button>
             <div id="detailArea"></div>
@@ -337,7 +350,6 @@
             </div>
         </section>
 
-        <!-- VOD 보기 뷰 (새로 추가) -->
         <section id="vodView">
             <div class="vod-container">
                 <span class="vod-lock-icon">🔒</span>
@@ -774,7 +786,6 @@
             const navHome = document.getElementById('navHome');
             const navVod = document.getElementById('navVod');
 
-            // 메뉴 활성화 초기화
             navHome.classList.remove('active');
             navVod.classList.remove('active');
 
