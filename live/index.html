@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>치지직 링크 등록기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen py-10 px-4">
+
+    <div class="max-w-md mx-auto">
+        <!-- Logo & Header -->
+        <div class="text-center mb-8">
+            <img src="https://opencard.uk/6fbe4b4a-c71d-49d3-94a6-c61399af811e.png" alt="Logo" class="h-20 mx-auto mb-4 drop-shadow-md">
+            <h1 class="text-2xl font-bold text-slate-800">치지직 링크 매니저</h1>
+            <p class="text-slate-500 text-sm mt-1">라이브 조직 링크를 관리하세요</p>
+        </div>
+
+        <!-- Input Form -->
+        <div class="glass-morphism rounded-2xl p-6 shadow-xl mb-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">제목</label>
+                    <input id="title-input" type="text" placeholder="방송 제목 또는 닉네임" 
+                           class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">치지직 링크</label>
+                    <input id="link-input" type="text" placeholder="https://chzzk.naver.com/..." 
+                           class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-white">
+                </div>
+                <button id="submit-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-plus"></i> 링크 등록하기
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Message -->
+        <div id="status-msg" class="hidden text-center p-3 rounded-xl mb-4 text-sm font-medium"></div>
+
+        <!-- List Section -->
+        <div class="space-y-3">
+            <h2 class="text-lg font-bold text-slate-700 px-1">등록된 링크 리스트</h2>
+            <div id="links-container" class="space-y-3">
+                <!-- Data will be injected here -->
+                <div class="text-center py-10 text-slate-400">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <p>데이터를 불러오는 중...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOu8jfgNproVHenknRdsG-HPScyFMdO0k",
+            authDomain: "joygonews318.firebaseapp.com",
+            projectId: "joygonews318",
+            storageBucket: "joygonews318.firebasestorage.app",
+            messagingSenderId: "18066193272",
+            appId: "1:18066193272:web:8a5e0e8e8a82d3e870e68d",
+            measurementId: "G-YGPH1T655Y"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'joygo-chzzk-manager';
+
+        // UI Elements
+        const titleInput = document.getElementById('title-input');
+        const linkInput = document.getElementById('link-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const container = document.getElementById('links-container');
+        const statusMsg = document.getElementById('status-msg');
+
+        let currentUser = null;
+
+        // Status Helper
+        const showStatus = (msg, isError = false) => {
+            statusMsg.textContent = msg;
+            statusMsg.className = `block text-center p-3 rounded-xl mb-4 text-sm font-medium ${isError ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`;
+            setTimeout(() => { statusMsg.className = 'hidden'; }, 3000);
+        };
+
+        // Auth
+        const initAuth = async () => {
+            try {
+                await signInAnonymously(auth);
+            } catch (error) {
+                console.error("Auth failed", error);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                loadLinks();
+            }
+        });
+
+        // Load Links (Real-time)
+        const loadLinks = () => {
+            const linksCol = collection(db, 'artifacts', appId, 'public', 'data', 'chzzk_links');
+            
+            onSnapshot(linksCol, (snapshot) => {
+                container.innerHTML = '';
+                const docs = [];
+                snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+
+                // Sort by timestamp in memory (descending)
+                docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+                if (docs.length === 0) {
+                    container.innerHTML = '<div class="text-center py-10 bg-white rounded-2xl text-slate-400">등록된 링크가 없습니다.</div>';
+                    return;
+                }
+
+                docs.forEach(data => {
+                    const div = document.createElement('div');
+                    div.className = 'glass-morphism p-4 rounded-2xl flex items-center justify-between shadow-sm border border-slate-100 hover:shadow-md transition-shadow';
+                    div.innerHTML = `
+                        <div class="flex-1 min-w-0 mr-4">
+                            <h3 class="font-bold text-slate-800 truncate">${data.title}</h3>
+                            <a href="${data.link}" target="_blank" class="text-xs text-blue-500 hover:underline truncate block">${data.link}</a>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="window.open('${data.link}', '_blank')" class="bg-slate-100 p-2 rounded-lg text-slate-600 hover:bg-green-50 hover:text-green-600 transition-colors">
+                                <i class="fas fa-external-link-alt"></i>
+                            </button>
+                            <button data-id="${data.id}" class="delete-btn bg-slate-100 p-2 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+
+                // Delete Logic
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        const id = e.currentTarget.getAttribute('data-id');
+                        try {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chzzk_links', id));
+                            showStatus('삭제되었습니다.');
+                        } catch (err) {
+                            showStatus('삭제 중 오류가 발생했습니다.', true);
+                        }
+                    };
+                });
+            }, (error) => {
+                console.error("Firestore error", error);
+                container.innerHTML = '<div class="text-center py-10 text-red-500 font-medium">데이터를 불러오는 중 오류가 발생했습니다.</div>';
+            });
+        };
+
+        // Submit Logic
+        submitBtn.onclick = async () => {
+            const title = titleInput.value.trim();
+            const link = linkInput.value.trim();
+
+            if (!title || !link) {
+                showStatus('제목과 링크를 모두 입력해주세요.', true);
+                return;
+            }
+
+            if (!link.includes('chzzk.naver.com')) {
+                showStatus('유효한 치지직 링크를 입력해주세요.', true);
+                return;
+            }
+
+            if (!currentUser) {
+                showStatus('인증 중입니다. 잠시 후 다시 시도해주세요.', true);
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 등록 중...';
+
+            try {
+                const linksCol = collection(db, 'artifacts', appId, 'public', 'data', 'chzzk_links');
+                await addDoc(linksCol, {
+                    title,
+                    link,
+                    userId: currentUser.uid,
+                    createdAt: serverTimestamp()
+                });
+
+                titleInput.value = '';
+                linkInput.value = '';
+                showStatus('성공적으로 등록되었습니다!');
+            } catch (err) {
+                console.error(err);
+                showStatus('등록 중 오류가 발생했습니다.', true);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-plus"></i> 링크 등록하기';
+            }
+        };
+
+        initAuth();
+    </script>
+</body>
+</html>
