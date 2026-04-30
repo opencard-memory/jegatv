@@ -136,7 +136,6 @@
         nav ul li a.active { color: var(--joygo-red); }
         nav ul li a:hover { color: var(--joygo-red); }
 
-        /* 조이고뉴스로 이동 버튼 특수 스타일 */
         .btn-external {
             background: var(--joygo-red);
             color: white !important;
@@ -191,7 +190,6 @@
         .reply-container { margin-left: 40px; margin-top: 10px; border-left: 2px solid var(--border); padding-left: 15px; }
         .reply-input-box { margin-top: 10px; display: none; }
 
-        /* VOD 전용 스타일 */
         .vod-container {
             text-align: center;
             padding: 60px 20px;
@@ -309,13 +307,13 @@
         </div>
         <nav>
             <ul id="mainNav">
-                <li><a onclick="location.hash = '#'" id="navHome">홈</a></li>
+                <!-- 홈 버튼 이름을 요청대로 변경 -->
+                <li><a onclick="location.hash = '#'" id="navHome">뉴스 (조이고뉴스 연동)</a></li>
                 <li><a href="https://www.joygonews.uk/jebo" target="_blank">제보</a></li>
                 <li><a href="https://www.joygonews.uk/weather" target="_blank">날씨</a></li>
                 <li><a href="https://padlet.com/koreacomsearch/padlet-2ik5nqjo7y4q1qoh" target="_blank">게시판</a></li>
                 <li><a href="https://map.joygonews.uk/" target="_blank">지도</a></li>
                 <li><a onclick="location.hash = '#/vod'" id="navVod">실시간 VOD 보기</a></li>
-                <!-- 추가된 조이고뉴스로 이동 버튼 -->
                 <li><a href="https://www.joygonews.uk" target="_blank" class="btn-external">조이고뉴스로 이동</a></li>
             </ul>
         </nav>
