@@ -199,37 +199,21 @@
             box-shadow: 0 4px 20px var(--shadow);
             margin-top: 20px;
         }
-        .vod-lock-icon {
+        .vod-status-icon {
             font-size: 60px;
             margin-bottom: 20px;
             display: block;
         }
         .vod-title {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 900;
-            color: var(--text-main);
+            color: var(--joygo-red);
             margin-bottom: 15px;
         }
         .vod-desc {
             color: var(--text-muted);
-            margin-bottom: 30px;
-        }
-        .subscribe-btn {
-            background: var(--joygo-red);
-            color: white;
-            padding: 15px 40px;
-            border: none;
-            border-radius: 30px;
             font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: transform 0.2s, background 0.2s;
-        }
-        .subscribe-btn:hover {
-            transform: scale(1.05);
-            background: #c92a35;
+            margin-bottom: 30px;
         }
 
         #nicknameModal {
@@ -308,7 +292,6 @@
         <nav>
             <ul id="mainNav">
                 <li><a onclick="location.hash = '#'" id="navHome">뉴스 (조이고뉴스 연동)</a></li>
-                <!-- 요청하신 대로 제보/날씨 링크 수정 -->
                 <li><a href="https://jegatv.joygonews.uk/jebo/" target="_blank">제보</a></li>
                 <li><a href="https://jegatv.joygonews.uk/weather/" target="_blank">날씨</a></li>
                 <li><a href="https://padlet.com/koreacomsearch/padlet-2ik5nqjo7y4q1qoh" target="_blank">게시판</a></li>
@@ -350,10 +333,9 @@
 
         <section id="vodView">
             <div class="vod-container">
-                <span class="vod-lock-icon">🔒</span>
-                <h2 class="vod-title">VOD는 프리미엄 사용자만 가능합니다.</h2>
-                <p class="vod-desc">고화질 실시간 VOD를 무제한으로 즐기려면 구독이 필요합니다.</p>
-                <a href="https://www.payapp.kr/L/z4cVQ2" target="_blank" class="subscribe-btn">구독하기</a>
+                <span class="vod-status-icon">🎬</span>
+                <h2 class="vod-title">곧 나올 예정이다 맨이야</h2>
+                <p class="vod-desc">열심히 준비하고 있으니 조금만 더 기다려달라구!</p>
             </div>
         </section>
     </main>
